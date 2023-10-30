@@ -5,8 +5,10 @@ CREATE OR REPLACE PROCEDURE insert_user(IN p_username VARCHAR, IN p_email VARCHA
 LANGUAGE 'plpgsql'
 AS $$
 BEGIN
+  BEGIN TRANSACTION
   INSERT INTO users (username, email, password, region_id, created_at)
   VALUES (p_username, p_email, p_password, p_region_id, NOW());
+  COMMIT
 END;
 $$;
 
@@ -34,13 +36,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 
---Usage:
---
---
---SELECT avg_game_rating(1);
 
-
---3. Trigger: Update game's `updated_at` and `updated_by` on review creation
+--3. Trigger: Update game on review creation
 
 
 CREATE FUNCTION trigger_update_game_on_review() RETURNS trigger
@@ -48,8 +45,8 @@ AS $$
 BEGIN
   UPDATE games g
     SET updated_at = NEW.created_at, updated_by = NEW.user_id,
-    rating = (OLD.rating * (SELECT COUNT(*) FROM reviews r WHERE r.id = g.game_id) + NEW.rating)/
-    (SELECT COUNT(*) FROM reviews r WHERE r.id = g.game_id)
+    rating = (OLD.rating * (SELECT COUNT(*) FROM OLD r WHERE r.id = g.game_id) + NEW.rating)/
+    (SELECT COUNT(*) FROM OLD r WHERE r.id = g.game_id)
     WHERE g.id = NEW.game_id;
   RETURN NEW;
 END;
@@ -69,16 +66,12 @@ CREATE OR REPLACE PROCEDURE add_favorite_game(IN p_user_id INTEGER, IN p_game_id
 LANGUAGE 'plpgsql'
 AS $$
 BEGIN
+  BEGIN TRANSACTION
   INSERT INTO favorite_games (user_id, game_id, updated_at)
   VALUES (p_user_id, p_game_id, NOW());
+  COMMIT
 END;
 $$;
-
---
---Usage:
---
---
---CALL add_favorite_game(1, 1);
 
 
 --5. Custom Function: Get user's favorite games

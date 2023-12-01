@@ -89,12 +89,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
---Usage:
---
---
---SELECT * FROM get_favorite_games(1);
-
-
 --6. Trigger: Check game purchasing before adding review
 
 
@@ -131,9 +125,11 @@ CREATE OR REPLACE PROCEDURE update_game_rating(p_game_id INTEGER, p_new_rating F
 LANGUAGE 'plpgsql'
 AS $$
 BEGIN
+  BEGIN TRANSACTION
   UPDATE games
     SET rating = p_new_rating, updated_at = NOW()
     WHERE id = p_game_id;
+  COMMIT
 END;
 $$;
 
@@ -157,12 +153,6 @@ BEGIN
   WHERE genre_id = p_genre_id;
 END;
 $$ LANGUAGE plpgsql;
-
-
---Usage:
---
---
---SELECT * FROM get_games_by_genre(1);
 
 
 --9. Trigger Create game_purchasing for user only if game released in user region
@@ -202,9 +192,11 @@ CREATE OR REPLACE PROCEDURE update_developer(IN p_id INTEGER, IN p_name VARCHAR,
 LANGUAGE 'plpgsql'
 AS $$
 BEGIN
+  BEGIN TRANSACTION
   UPDATE developers
     SET name = p_name, founded_date = p_founded_date, website = p_website, country = p_country, updated_at = NOW(), updated_by = p_updated_by
     WHERE id = p_id;
+  COMMIT
 END;
 $$;
 
